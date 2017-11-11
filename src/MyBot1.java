@@ -55,39 +55,28 @@ public class MyBot1 {
                     planetsToHome = gameMap.nearbyPlanetsByDistance(ship);
                 }
 
-                if (numPlayers == 0) {
+                if (numPlayers == 2) {
                     /* Two Player Mode */
 
                     //@TODO: look at 2 player mode from divsurana
 
                     //get the nearest docked enemy
                     Ship nearestDockedEnemy = ship.findNearestEnemy(gameMap, me, true);
-                    //if docked enemy exists navigate to attack him
-                    if (nearestDockedEnemy != null) {
-                        final ThrustMove newThrustMove = Navigation.navigateShipTowardsTarget(gameMap, ship, ship
-                                .getClosestPoint(nearestDockedEnemy), Constants.MAX_SPEED, true, Constants
-                                .MAX_NAVIGATION_CORRECTIONS, Math.PI/180.0);
-                        if (newThrustMove != null) {
-                            moveList.add(newThrustMove);
-                        }
-                    } else {
-                        //else get the nearest enemy ship
-                        Ship nearestEnemy = ship.findNearestEnemy(gameMap, me, false);
-                        ThrustMove newThrustMove;
-                        if (nearestEnemy != null) {
-                            //if nearest enemy ship exists navigate to attack
-                            newThrustMove = Navigation.navigateShipTowardsTarget(gameMap, ship, ship
-                                    .getClosestPoint(nearestEnemy), Constants.MAX_SPEED, true, Constants
-                                    .MAX_NAVIGATION_CORRECTIONS, Math.PI / 180.0);
-                        } else {
-                            //empty thrust move
-                            newThrustMove = Navigation.emptyThrustMove(ship);
-                        }
 
-                        if (newThrustMove != null) {
-                            moveList.add(newThrustMove);
-                        }
-                        
+                    ThrustMove newThrustMove;
+                    if (nearestDockedEnemy == null) {
+                        //settle with the nearest undocked enemy
+                        nearestDockedEnemy = ship.findNearestEnemy(gameMap, me, false);
+                    }
+
+                    newThrustMove = Navigation.navigateShipTowardsTarget(gameMap, ship, ship
+                            .getClosestPoint(nearestDockedEnemy), Constants.MAX_SPEED, true, Constants
+                            .MAX_NAVIGATION_CORRECTIONS, Math.PI/180.0);
+
+                    if (newThrustMove != null) {
+                        moveList.add(newThrustMove);
+                    } else {
+                        moveList.add(Navigation.emptyThrustMove(ship));
                     }
 
                 } else {

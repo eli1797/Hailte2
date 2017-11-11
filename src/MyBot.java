@@ -5,6 +5,7 @@ import java.util.Map;
 
 public class MyBot {
 
+
     private static final int CHASE_FACTOR = 50;
 
     public static void main(final String[] args) {
@@ -16,9 +17,9 @@ public class MyBot {
          */
         final String initialMapIntelligence =
                 "width: " + gameMap.getWidth() +
-                "; height: " + gameMap.getHeight() +
-                "; players: " + gameMap.getAllPlayers().size() +
-                "; planets: " + gameMap.getAllPlanets().size() + "    ";
+                        "; height: " + gameMap.getHeight() +
+                        "; players: " + gameMap.getAllPlayers().size() +
+                        "; planets: " + gameMap.getAllPlanets().size() + "    ";
         Log.log(initialMapIntelligence);
 
         /* Game Progression Flags and Variables */
@@ -36,7 +37,7 @@ public class MyBot {
          */
 
         final ArrayList<Move> moveList = new ArrayList<>();
-        for (int i = 1;; i++) {
+        for (int i = 1; ; i++) {
             moveList.clear();
             networking.updateMap(gameMap);
 
@@ -53,7 +54,7 @@ public class MyBot {
                     planetsToHome = gameMap.nearbyPlanetsByDistance(ship);
                 }
 
-                if (numPlayers == 0) {
+                if (numPlayers == 2) {
                     /* Two Player Mode */
 
                     //@TODO: look at 2 player mode from divsurana
@@ -64,7 +65,7 @@ public class MyBot {
                     if (nearestDockedEnemy != null) {
                         final ThrustMove newThrustMove = Navigation.navigateShipTowardsTarget(gameMap, ship, ship
                                 .getClosestPoint(nearestDockedEnemy), Constants.MAX_SPEED, true, Constants
-                                .MAX_NAVIGATION_CORRECTIONS, Math.PI/180.0);
+                                .MAX_NAVIGATION_CORRECTIONS, Math.PI / 180.0);
                         if (newThrustMove != null) {
                             moveList.add(newThrustMove);
                         }
@@ -85,7 +86,7 @@ public class MyBot {
                         if (newThrustMove != null) {
                             moveList.add(newThrustMove);
                         }
-                        
+
                     }
 
                 } else {
