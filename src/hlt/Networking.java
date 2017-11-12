@@ -111,4 +111,23 @@ public class Networking {
 
         map.updateMap(inputStringMetadata);
     }
+
+    public void updateMap(final GameMap map, final Player player) {
+        if (turn == 1) {
+            System.out.println(botName);
+        }
+
+        final Metadata inputStringMetadata = readLineIntoMetadata();
+        //final Metadata copy = inputStringMetadata.copy();
+
+        if (turn == 0) {
+            Log.log("--- PRE-GAME ---");
+        } else {
+            Log.log("--- TURN " + turn + " ---");
+        }
+        ++turn;
+
+        map.updateMap(inputStringMetadata);
+        //player.updateStats(copy);
+    }
 }

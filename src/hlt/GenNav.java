@@ -43,4 +43,33 @@ public class GenNav {
 
         return toReturn;
     }
+
+    /**
+     * Returns the nearest non full planet
+     * @param entity The ship/planet that is looking for nearby planets
+     * @param me The player
+     * @param gameMap The 2D playing field
+     * @param wantUnowned True if I want planets that are unoccupied
+     * @return The nearest non-full planet
+     */
+    public static Planet nearestPlanetMining(Entity entity, Player me, GameMap gameMap, boolean wantUnowned) {
+        Planet toReturn = null;
+
+        TreeMap<Double, Entity> planetMap = gameMap.nearbyPlanetsByDistanceMining(entity);
+
+        if (planetMap != null && !planetMap.isEmpty()) {
+            for (Map.Entry<Double, Entity> ent : planetMap.entrySet()) {
+                Planet planet = (Planet) ent.getValue();
+
+                if (wantUnowned && planet.isOwned()) {
+                    continue;
+                }
+
+                toReturn = planet;
+                break;
+            }
+        }
+
+        return toReturn;
+    }
 }

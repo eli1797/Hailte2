@@ -146,6 +146,19 @@ public class GameMap {
         return entityByDistance;
     }
 
+    public TreeMap<Double, Entity> nearbyPlanetsByDistanceMining(final Entity entity) {
+        final TreeMap<Double, Entity> entityByDistance = new TreeMap<>();
+
+        for (final Planet planet : planets.values()) {
+            if (planet.isFull()) {
+                continue;
+            }
+            entityByDistance.put(entity.getDistanceTo(planet), planet);
+        }
+
+        return entityByDistance;
+    }
+
     public List<Planet> getPlayerPlanets(Player player) {
         List<Planet> myPlanets = new ArrayList<>();
 
