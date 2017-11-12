@@ -29,6 +29,10 @@ public class Ship extends Entity {
         return dockingStatus;
     }
 
+    public boolean isDocked() {
+        return dockingStatus != DockingStatus.Undocked;
+    }
+
     public int getDockingProgress() {
         return dockingProgress;
     }

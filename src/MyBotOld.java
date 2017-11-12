@@ -54,7 +54,7 @@ public class MyBotOld {
                     planetsToHome = gameMap.nearbyPlanetsByDistance(ship);
                 }
 
-                if (numPlayers == 0) {
+                if (numPlayers == 2) {
                     /* Two Player Mode */
 
                     //@TODO: look at 2 player mode from divsurana

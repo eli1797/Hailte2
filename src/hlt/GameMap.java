@@ -42,6 +42,10 @@ public class GameMap {
         return playerId;
     }
 
+    public List<Player> getPlayers() {
+        return players;
+    }
+
     public List<Player> getAllPlayers() {
         return playersUnmodifiable;
     }
@@ -123,6 +127,16 @@ public class GameMap {
         return entityByDistance;
     }
 
+    public TreeMap<Double, Entity> nearbyShipsByDistance(final Position pos) {
+        final TreeMap<Double, Entity> entityByDistance = new TreeMap<>();
+
+        for (final Ship ship : allShips) {
+            entityByDistance.put(pos.getDistanceTo(ship), ship);
+        }
+
+        return entityByDistance;
+    }
+
     public TreeMap<Double, Entity> nearbyPlanetsByDistance(final Entity entity) {
         final TreeMap<Double, Entity> entityByDistance = new TreeMap<>();
 
@@ -136,8 +150,8 @@ public class GameMap {
         return entityByDistance;
     }
 
-    public TreeMap<Double, Entity> nearbyPlanetsByDistance(final Position position) {
-        final TreeMap<Double, Entity> entityByDistance = new TreeMap<>();
+    public TreeMap<Double, Planet> nearbyPlanetsByDistance(final Position position) {
+        final TreeMap<Double, Planet> entityByDistance = new TreeMap<>();
 
         for (final Planet planet : planets.values()) {
             entityByDistance.put(position.getDistanceTo(planet), planet);
@@ -171,6 +185,18 @@ public class GameMap {
         return myPlanets;
     }
 
+    public List<Ship> getPlayerShips(Player player) {
+        List<Ship> playerShips = new ArrayList<>();
+
+        for (final Ship ship : allShips) {
+            if (ship.getOwner() != player.getId()) {
+                continue;
+            }
+            playerShips.add(ship);
+        }
+        return playerShips;
+    }
+
     public GameMap updateMap(final Metadata mapMetadata) {
         final int numberOfPlayers = MetadataParser.parsePlayerNum(mapMetadata);
 
@@ -184,13 +210,19 @@ public class GameMap {
             final Map<Integer, Ship> currentPlayerShips = new TreeMap<>();
             final int playerId = MetadataParser.parsePlayerId(mapMetadata);
 
-            final Player currentPlayer = new Player(playerId, currentPlayerShips);
+//            final Player currentPlayer = new Player(playerId, currentPlayerShips);
             MetadataParser.populateShipList(currentShips, playerId, mapMetadata);
             allShips.addAll(currentShips);
 
+            int dockedCounter = 0;
             for (final Ship ship : currentShips) {
+                if (ship.isDocked()) {
+                    dockedCounter++;
+                }
                 currentPlayerShips.put(ship.getId(), ship);
             }
+
+            final Player currentPlayer = new Player(playerId, currentPlayerShips, dockedCounter);
             players.add(currentPlayer);
         }
 

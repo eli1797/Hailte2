@@ -57,6 +57,37 @@ public class Entity extends Position {
         return toReturn;
     }
 
+    /**
+     * Gets the nearest ship to the desired player
+     * @param wantDocked True if I only want docked ships
+     */
+    public Ship findNearestPlayersShip(GameMap gameMap, Player wanted, boolean wantDocked) {
+        Ship toReturn = null;
+        TreeMap<Double, Entity> nearbyShips = gameMap.nearbyShipsByDistance(this);
+        if (nearbyShips != null && !nearbyShips.isEmpty()) {
+            for (Map.Entry<Double, Entity> entry : nearbyShips.entrySet()) {
+                Ship ship = (Ship) entry.getValue();
+                if (ship.equals(this)) {
+                    //don't want myself
+                    continue;
+                }
+
+                if (ship.getOwner() != wanted.getId()) {
+                    //don't want to see my ships
+                    continue;
+                }
+                if (wantDocked && ship.getDockingStatus() == Ship.DockingStatus.Undocked) {
+                    continue;
+                }
+
+                toReturn = ship;
+                break;
+
+            }
+        }
+        return toReturn;
+    }
+
     @Override
     public String toString() {
         return "Entity[" +

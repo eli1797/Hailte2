@@ -2,6 +2,35 @@ package hlt;
 
 public class Navigation {
 
+    public static ThrustMove attack(final GameMap gameMap, final Ship ship, final Entity target, final int maxThrust) {
+        final int maxCorrections = Constants.MAX_NAVIGATION_CORRECTIONS;
+        final boolean avoidObstacles = true;
+        final double angularStepRad = Math.PI/180.0;
+        final Position targetPos = ship.getClosestPoint(target);
+
+        return navigateShipTowardsTarget(gameMap, ship, targetPos, maxThrust, avoidObstacles, maxCorrections, angularStepRad);
+    }
+
+
+    public static ThrustMove speedSensitiveattack(final GameMap gameMap, final Ship ship, final Entity target) {
+        final int maxCorrections = Constants.MAX_NAVIGATION_CORRECTIONS;
+        final boolean avoidObstacles = true;
+        final double angularStepRad = Math.PI/180.0;
+        final Position targetPos = ship.getClosestPoint(target);
+
+        int maxThrust;
+        double distance = ship.getDistanceTo(target);
+        if (distance > 8) {
+            maxThrust = Constants.MAX_SPEED;
+        } else if (distance > 5) {
+            maxThrust = 5;
+        } else {
+            maxThrust = 4;
+        }
+
+        return navigateShipTowardsTarget(gameMap, ship, targetPos, maxThrust, avoidObstacles, maxCorrections, angularStepRad);
+    }
+
     public static ThrustMove navigateShipToDock(
             final GameMap gameMap,
             final Ship ship,

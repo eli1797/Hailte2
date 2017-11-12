@@ -44,6 +44,35 @@ public class GenNav {
         return toReturn;
     }
 
+    public static Planet nearestPlanetToPosition(Position pos, Player me, GameMap gameMap, boolean wantUnowned, boolean
+            wantEnemy) {
+        Planet toReturn = null;
+
+        TreeMap<Double, Planet> planetMap = gameMap.nearbyPlanetsByDistance(pos);
+
+        if (planetMap != null && !planetMap.isEmpty()) {
+            for (Map.Entry<Double, Planet> ent : planetMap.entrySet()) {
+                Planet planet = ent.getValue();
+                if (planet.isFull() && planet.getOwner() == me.getId()) {
+                    continue;
+                }
+
+                if (wantUnowned && planet.isOwned()) {
+                    continue;
+                }
+
+                if (wantEnemy && planet.getOwner() == me.getId()) {
+                    continue;
+                }
+
+                toReturn = planet;
+                break;
+            }
+        }
+
+        return toReturn;
+    }
+
     /**
      * Returns the nearest non full planet
      * @param entity The ship/planet that is looking for nearby planets
@@ -70,6 +99,52 @@ public class GenNav {
             }
         }
 
+        return toReturn;
+    }
+
+    public static Planet nearestPlanetMining(Position pos, Player me, GameMap gameMap, boolean wantUnowned) {
+        Planet toReturn = null;
+
+        TreeMap<Double, Planet> planetMap = gameMap.nearbyPlanetsByDistance(pos);
+
+        if (planetMap != null && !planetMap.isEmpty()) {
+            for (Map.Entry<Double, Planet> ent : planetMap.entrySet()) {
+                Planet planet = ent.getValue();
+                if (planet.isFull()) {
+                    continue;
+                }
+                if (wantUnowned && planet.isOwned()) {
+                    continue;
+                }
+
+                toReturn = planet;
+                break;
+            }
+        }
+
+        return toReturn;
+    }
+
+
+    public static Ship findNearestEnemy(Position pos, GameMap gameMap, Player me, boolean wantDocked) {
+        Ship toReturn = null;
+        TreeMap<Double, Entity> nearbyShips = gameMap.nearbyShipsByDistance(pos);
+        if (nearbyShips != null && !nearbyShips.isEmpty()) {
+            for (Map.Entry<Double, Entity> entry : nearbyShips.entrySet()) {
+                Ship ship = (Ship) entry.getValue();
+                if (ship.getOwner() == me.getId()) {
+                    //don't want to see my ships
+                    continue;
+                }
+                if (wantDocked && ship.getDockingStatus() == Ship.DockingStatus.Undocked) {
+                    continue;
+                }
+
+                toReturn = ship;
+                break;
+
+            }
+        }
         return toReturn;
     }
 }

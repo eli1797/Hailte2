@@ -1,5 +1,5 @@
 #!/bin/sh
 
-javac MyBotOld.java
+javac MyBot.java
 javac MyBot1.java
-./halite -d "240 160" "java MyBot1" "java MyBotOld"
+./halite -d "240 160" "java MyBot1" "java MyBot"

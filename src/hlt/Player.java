@@ -8,12 +8,17 @@ import java.util.TreeMap;
 public class Player {
 
     private final Map<Integer, Ship> ships;
-    private List<Ship> shipList;
+    private int dockedShips = -1;
     private final int id;
 
     public Player(final int id, Map<Integer, Ship> ships) {
         this.id = id;
         this.ships = Collections.unmodifiableMap(ships);
+    }
+
+    public Player(final int id, Map<Integer, Ship> ships, int dockedShips) {
+        this(id, ships);
+        this.dockedShips = dockedShips;
     }
 
     public Map<Integer, Ship> getShips() {
@@ -28,19 +33,9 @@ public class Player {
         return id;
     }
 
-    public List<Ship> getShipList() {
-        return shipList;
+    public int getDockedShips() {
+        return dockedShips;
     }
 
-    public void updateStats(Metadata playerMetadata) {
-        final Map<Integer, Ship> currentPlayerShips = new TreeMap<>();
-
-        final Player currentPlayer = this;
-        MetadataParser.populateShipList(shipList, id, playerMetadata);
-
-        for (final Ship ship : shipList) {
-            ships.put(ship.getId(), ship);
-        }
-    }
 
 }

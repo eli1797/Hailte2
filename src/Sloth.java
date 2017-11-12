@@ -1,11 +1,24 @@
-import hlt.*;
+import hlt.Constants;
+import hlt.DockMove;
+import hlt.Entity;
+import hlt.GameMap;
+import hlt.GenNav;
+import hlt.Log;
+import hlt.Move;
+import hlt.Navigation;
+import hlt.Networking;
+import hlt.Planet;
+import hlt.Player;
+import hlt.Position;
+import hlt.Ship;
+import hlt.ThrustMove;
+import hlt.UndockMove;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
 
-public class MyBot {
+public class Sloth {
     private static final double TWO_DOMINANCE_RATIO = 1.5;
 
     private static final double POWER_RATIO = 1.8;
@@ -20,7 +33,7 @@ public class MyBot {
 
     public static void main(final String[] args) {
         final Networking networking = new Networking();
-        final GameMap gameMap = networking.initialize("Position");
+        final GameMap gameMap = networking.initialize("Territorial Sloth");
 
         /*
         One minute of map analysis
@@ -63,6 +76,9 @@ public class MyBot {
             enemyIDs.add(player.getId());
         }
 
+        /* Navigational Information */
+        TreeMap<Double, Planet> starterMap = null;
+
         /*
         Game Play
          */
@@ -101,7 +117,7 @@ public class MyBot {
                 klingonShips = klingon.getShips().size();
             }
 
-            if (planetChange && myPlanets.size() > 0) {
+            if (myPlanets.size() > 1) {
                 starting = center(myPlanets);
             }
 
@@ -112,6 +128,7 @@ public class MyBot {
                 if (i == 1) {
                     //first turn!!!!
                     starting = center(ship);
+                    starterMap = gameMap.nearbyPlanetsByDistance(starting);
                     //determine whether or not to troll a player
                     Ship nearestEnemy = ship.findNearestEnemy(gameMap, me, false);
                     Player shipOwner = players.get(nearestEnemy.getOwner());
@@ -273,6 +290,17 @@ public class MyBot {
                     /* Four Player Mode */
                     Log.log("Four player mode");
 
+                    double meToBorgShips = ((double) myShips) / borgShips;
+                    double meToRomShips = ((double) myShips) / romulanShips;
+                    double meToKlingShips = ((double) myShips) / klingonShips;
+
+                    boolean weakBorg = meToBorgShips > POWER_RATIO;
+                    boolean weakRom = meToRomShips > POWER_RATIO;
+                    boolean weakKling = meToKlingShips > POWER_RATIO;
+
+                    boolean oneWeak = weakBorg || weakRom || weakKling;
+                    boolean allWeak = weakBorg && weakRom && weakKling;
+
                     final ThrustMove newThrustMove;
 
                     Planet planet;
@@ -287,7 +315,7 @@ public class MyBot {
                     boolean unownedCloser = nearestUnowned != null && ship.getDistanceTo(nearestUnowned) < pDistance;
 
                     if (dockablecloser) {
-                      planet = nearestToShip;
+                        planet = nearestToShip;
                     } else if (unownedCloser) {
                         planet = nearestUnowned;
                     } else {
@@ -341,13 +369,21 @@ public class MyBot {
                                 }
                                 newThrustMove = Navigation.navigateShipToDock(gameMap, ship, nearestPlanet, Constants.MAX_SPEED);
                             } else {
-                                newThrustMove = Navigation.speedSensitiveattack(gameMap, ship, nearestEnemy);
+                                if (!allWeak) {
+                                    newThrustMove = Navigation.speedSensitiveattack(gameMap, ship, nearestEnemy);
+                                } else {
+                                    newThrustMove = Navigation.navigateShipToDock(gameMap, ship, nearestPlanet, 6);
+                                }
                             }
                         }
                     } else if (nearestEnemy.isDocked()) {
                         newThrustMove = Navigation.attack(gameMap, ship, nearestEnemy, Constants.MAX_SPEED);
                     } else {
-                        newThrustMove = Navigation.speedSensitiveattack(gameMap, ship, nearestEnemy);
+                        if (!allWeak) {
+                            newThrustMove = Navigation.speedSensitiveattack(gameMap, ship, nearestEnemy);
+                        } else {
+                            newThrustMove = Navigation.navigateShipToDock(gameMap, ship, nearestPlanet, 6);
+                        }
                     }
 
 
@@ -379,3 +415,4 @@ public class MyBot {
     }
 
 }
+
