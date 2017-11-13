@@ -10,7 +10,7 @@ public class MyBot {
 
     private static final double POWER_RATIO = 1.8;
 
-    private static final int TROLL_FACTOR = 21;
+    private static final int TROLL_FACTOR = 14;
 
     private static final int DOCK_FACTOR = 60;
 
@@ -121,7 +121,7 @@ public class MyBot {
                     double pDistance = ship.getDistanceTo(nearestPlanet);
                     boolean largePlanet = nearestPlanet.getDockingSpots() > 3;
 
-                    boolean troll = (sDistance + TROLL_FACTOR < pDistance) && !largePlanet;
+                    boolean troll = (sDistance < pDistance + TROLL_FACTOR) && !largePlanet;
 
                     if (troll) {
                         trollFlag = true;
@@ -132,6 +132,9 @@ public class MyBot {
                 if (ship.getDockingStatus() != Ship.DockingStatus.Undocked) {
                     Ship nearestEnemy = ship.findNearestEnemy(gameMap, me, false);
                     double enemyDistance = ship.getDistanceTo(nearestEnemy);
+                    double meToBorgShips = ((double) myShips) / borgShips;
+                    boolean powerfulBorg = meToBorgShips < .7;
+
                     if (myShips == 1 && enemyDistance < 36) {
                         moveList.add(new UndockMove(ship));
                     } else {
@@ -178,94 +181,29 @@ public class MyBot {
                 if (numPlayers == 2) {
                 /* Two Player Mode */
 
-                    double meToBorgShips = ((double) myShips) / borgShips;
-                    Log.log(meToBorgShips + " THE RATIO");
-
-                    if (meToBorgShips >= TWO_DOMINANCE_RATIO) { //ratio of ships favors me. cease expanding. attack
-                        //look for the nearest enemy ship
+                    //get the nearest docked enemy
+                    Ship nearestDockedEnemy = ship.findNearestEnemy(gameMap, me, true);
+                    Log.log("1");
+                    //if docked enemy exists navigate to attack him
+                    ThrustMove newThrustMove = null;
+                    if (nearestDockedEnemy != null) {
+                        Log.log("2");
+                        newThrustMove = Navigation.attack(gameMap, ship, nearestDockedEnemy, Constants.MAX_SPEED);
+                    } else {
+                        Log.log("3");
+                        //else get the nearest enemy ship
                         Ship nearestEnemy = ship.findNearestEnemy(gameMap, me, false);
-
-                        //attack slowly
-                        ThrustMove newThrustMove = Navigation.speedSensitiveattack(gameMap, ship, nearestEnemy);
-
-                        if (newThrustMove != null) {
-                            moveList.add(newThrustMove);
-                        } else {
-                            moveList.add(Navigation.emptyThrustMove(ship));
-                        }
-
-                    } else {    //else proceed normally
-                        //look for the nearest unoccupied planet
-                        ThrustMove newThrustMove;
-
-                        Planet planet;
-                        Planet nearestUnowned = GenNav.nearestPlanetMining(starting, me, gameMap, true);
-                        Planet nearestPlanet = GenNav.nearestPlanetToPosition(starting, me, gameMap, false, false);
-                        double pDistance = ship.getDistanceTo(nearestPlanet);
-                        boolean unownedCloser = nearestUnowned != null && ship.getDistanceTo(nearestUnowned) < pDistance;
-
-                        if (unownedCloser) {
-                            planet = nearestUnowned;
-                        } else {
-                            planet = nearestPlanet;
-                        }
-                        double planetDistance = ship.getDistanceTo(planet);
-
-
-                        Ship target;
-                        Ship nearestDocked = ship.findNearestEnemy(gameMap, me, true);
-                        Ship nearestEnemy = ship.findNearestEnemy(gameMap, me, false);
-                        double nDistance = ship.getDistanceTo(nearestEnemy);
-                        boolean dockedCloser = nearestDocked != null && ship.getDistanceTo(nearestDocked) + 60 <
-                                nDistance && numMyDocked > 6;
-
-                        if (dockedCloser) {
-                            target = nearestDocked;
-                        } else {
-                            target = nearestEnemy;
-                        }
-                        double tDistance = ship.getDistanceTo(target);
-
-                        boolean powerRatio = players.get(target.getOwner()).getShips().size() + 30 < myShips;
-
-                        boolean planetCloser = planetDistance < tDistance && (tDistance > 10 || powerRatio);
-
-                        boolean available = !nearestPlanet.isOwned() || nearestPlanet.getOwner() == me.getId();
-                        Log.log("Begining navigation");
-                        if (planetCloser && available) {
-                            if (unownedCloser) {
-                                if (ship.canDock(nearestUnowned)) {
-                                    moveList.add(new DockMove(ship, nearestUnowned));
-                                    continue;
-                                }
-                                newThrustMove = Navigation.navigateShipToDock(gameMap, ship, nearestUnowned, Constants
-                                        .MAX_SPEED);
-                            } else {
-                                if (!nearestPlanet.isFull()) {
-                                    if (ship.canDock(nearestPlanet) && !nearestPlanet.isFull()) {
-                                        moveList.add(new DockMove(ship, nearestPlanet));
-                                        continue;
-                                    }
-                                    newThrustMove = Navigation.navigateShipToDock(gameMap, ship, nearestPlanet, Constants.MAX_SPEED);
-                                } else {
-                                    newThrustMove = Navigation.speedSensitiveattack(gameMap, ship, nearestEnemy);
-                                }
-                            }
-                        } else if (nearestEnemy.isDocked()) {
-                            newThrustMove = Navigation.attack(gameMap, ship, nearestEnemy, Constants.MAX_SPEED);
-                        } else {
+                        if (nearestEnemy != null) {
+                            //if nearest enemy ship exists navigate to attack
                             newThrustMove = Navigation.speedSensitiveattack(gameMap, ship, nearestEnemy);
                         }
-
-                        if (myShips == 1) {
-                            newThrustMove = Navigation.speedSensitiveattack(gameMap, ship, nearestEnemy);
-                        }
-
-                        if (newThrustMove != null) {
-                            moveList.add(newThrustMove);
-                        } else {
-                            moveList.add(Navigation.emptyThrustMove(ship));
-                        }
+                    }
+                    if (newThrustMove != null) {
+                        Log.log("4");
+                        moveList.add(newThrustMove);
+                    } else {
+                        Log.log("5");
+                        moveList.add(Navigation.emptyThrustMove(ship));
                     }
 
 

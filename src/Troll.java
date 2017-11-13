@@ -1,19 +1,29 @@
-import hlt.*;
+import hlt.Constants;
+import hlt.DockMove;
+import hlt.Entity;
+import hlt.GameMap;
+import hlt.GenNav;
+import hlt.Log;
+import hlt.Move;
+import hlt.Navigation;
+import hlt.Networking;
+import hlt.Planet;
+import hlt.Player;
+import hlt.Position;
+import hlt.Ship;
+import hlt.ThrustMove;
+import hlt.UndockMove;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
-public class MyBot3 {
-
+public class Troll {
     private static final double TWO_DOMINANCE_RATIO = 1.5;
 
     private static final double POWER_RATIO = 1.8;
 
-    private static final int TROLL_FACTOR = 55;
+    private static final int TROLL_FACTOR = 21;
 
     private static final int DOCK_FACTOR = 60;
 
@@ -23,7 +33,7 @@ public class MyBot3 {
 
     public static void main(final String[] args) {
         final Networking networking = new Networking();
-        final GameMap gameMap = networking.initialize("3");
+        final GameMap gameMap = networking.initialize("Taunting Troll");
 
         /*
         One minute of map analysis
@@ -56,6 +66,8 @@ public class MyBot3 {
         Player klingon = null;
         int klingonShips = 3;
 
+        Player toTaunt = null;
+
         ArrayList<Integer> enemyIDs = new ArrayList<>(3);
         for (Player player : players) {
             if (player.getId() == myID) {
@@ -78,7 +90,6 @@ public class MyBot3 {
             /* Progress Markers */
             boolean tenDockedFlag = false;
             boolean sixDockedFlag = false;
-            boolean overwridden = false;
 
             /* Update player information */
             players = gameMap.getPlayers();
@@ -106,27 +117,6 @@ public class MyBot3 {
             Ship by Ship Commands
             */
             for (final Ship ship : gameMap.getMyPlayer().getShips().values()) {
-                if (i == 1) {
-                    //first turn!!!!
-                    Position starting = center(ship);
-                    starterMap = gameMap.nearbyPlanetsByDistance(starting);
-                    //determine whether or not to troll a player
-                    Ship nearestEnemy = ship.findNearestEnemy(gameMap, me, false);
-                    Player shipOwner = players.get(nearestEnemy.getOwner());
-                    double sDistance = ship.getDistanceTo(nearestEnemy);
-
-                    Planet farPlanet = GenNav.farthestPlanet(nearestEnemy, me, gameMap, false);
-                    double pDistance = ship.getDistanceTo(farPlanet);
-                    boolean largePlanet = farPlanet.getDockingSpots() > 3;
-
-                    boolean troll = (sDistance < pDistance + TROLL_FACTOR) && !largePlanet;
-
-                    if (troll) {
-                        trollFlag = true;
-                        toTroll = shipOwner;
-                    }
-                }
-
                 if (ship.getDockingStatus() != Ship.DockingStatus.Undocked) {
                     Ship nearestEnemy = ship.findNearestEnemy(gameMap, me, false);
                     double enemyDistance = ship.getDistanceTo(nearestEnemy);
@@ -149,24 +139,16 @@ public class MyBot3 {
                     continue;
                 }
 
-                //call off trolling
-                if (toTroll == null || toTroll.getShips().size() == 0) {
-                    trollFlag = false;
-                }
+                if (numPlayers == 2) {
+                /* Two Player Mode */
 
-
-                if (numPlayers == 2 && trollFlag) {
-                    /* Two Player Mode */
                     //get the nearest docked enemy
                     Ship nearestDockedEnemy = ship.findNearestEnemy(gameMap, me, true);
-                    Log.log("1");
                     //if docked enemy exists navigate to attack him
                     ThrustMove newThrustMove = null;
                     if (nearestDockedEnemy != null) {
-                        Log.log("2");
                         newThrustMove = Navigation.attack(gameMap, ship, nearestDockedEnemy, Constants.MAX_SPEED);
                     } else {
-                        Log.log("3");
                         //else get the nearest enemy ship
                         Ship nearestEnemy = ship.findNearestEnemy(gameMap, me, false);
                         if (nearestEnemy != null) {
@@ -175,90 +157,58 @@ public class MyBot3 {
                         }
                     }
                     if (newThrustMove != null) {
-                        Log.log("4");
                         moveList.add(newThrustMove);
                     } else {
-                        Log.log("5");
                         moveList.add(Navigation.emptyThrustMove(ship));
                     }
+
                 } else {
                     /* Four Player Mode */
                     Log.log("Four player mode");
 
                     ThrustMove newThrustMove = null;
-                    boolean planetCloser;
-                    double planetDistance;
 
-                    boolean planetsNull = false;
-                    boolean available = false;
-                    Planet planet = null;
-                    Log.log("1");
-                    Planet nearestUnowned = GenNav.nearestPlanetMining(ship, me, gameMap, true);
-                    Planet nearestPlanet = GenNav.nearestPlanetMining(ship, me, gameMap, false);
-
-                    if (nearestPlanet == null) {
-                        planetCloser = false;
-                        planetsNull = true;
-                        planetDistance = 100000;
-                    } else {
-                        double pDistance = ship.getDistanceTo(nearestPlanet);
-                        boolean unownedCloser = nearestUnowned != null && ship.getDistanceTo(nearestUnowned) < pDistance;
-
-                        if (unownedCloser) {
-                            planet = nearestUnowned;
-                        } else {
-                            planet = nearestPlanet;
-                        }
-                        available = (!planet.isOwned() || planet.belongsTo(me)) && !planet.isFull();
-                        planetDistance = ship.getDistanceTo(planet);
-                    }
-
-                    Log.log("2");
-                    Ship target = null;
-                    Ship nearestDocked = ship.findNearestEnemy(gameMap, me, true);
                     Ship nearestEnemy = ship.findNearestEnemy(gameMap, me, false);
-                    if (nearestDocked == null && nearestEnemy == null) {
-                        planetCloser = true;
+
+                    if (toTaunt == null) {
+                        toTaunt = players.get(nearestEnemy.getOwner());
                     } else {
-                        double nDistance = ship.getDistanceTo(nearestEnemy);
-                        boolean dockedCloser = nearestDocked != null && ship.getDistanceTo(nearestDocked) + 60 < nDistance;
-
-                        if (dockedCloser) {
-                            target = nearestDocked;
-                        } else {
-                            target = nearestEnemy;
-                        }
-                        double tDistance = ship.getDistanceTo(target);
-                        Log.log("4");
-                        boolean powerRatio = players.get(target.getOwner()).getShips().size() < myShips;
-
-                        if (numMyDocked < 5) {
-                            planetCloser = !planetsNull && planetDistance < tDistance && (tDistance > 34 || powerRatio);
-                        } else {
-                            planetCloser = !planetsNull && planetDistance < tDistance && (tDistance > 27 || powerRatio);
+                        Ship tauntable = GenNav.getNearestOfPlayer(toTaunt, ship, gameMap, false);
+                        Player closest = players.get(nearestEnemy.getOwner());
+                        if (ship.getDistanceTo(tauntable) > 30) {
+                            toTaunt = null;
+                        } else if (!closest.equals(toTaunt)) {
+                            toTaunt = closest;
                         }
                     }
+//
+//                    Ship nearestEnemy;
+//                    if (toTaunt == null) {
+//                        nearestEnemy = ship.findNearestEnemy(gameMap, me, false);
+//                    } else {
+//                        nearestEnemy = GenNav.getNearestOfPlayer(toTaunt, ship, gameMap, false);
+//                    }
 
-                    Log.log("4");
-                    Log.log("Begining navigation");
-                    if (planetCloser && available && !planetsNull) {
-                        if (ship.canDock(planet)) {
-                            moveList.add(new DockMove(ship, planet));
-                            continue;
+                    Log.log("attempt to define nearest enemy passed");
+                    if (nearestEnemy != null && ship.getDistanceTo(nearestEnemy) < 30 ) {
+                        Log.log("Nearest enemy is close!");
+                        toTaunt = players.get(nearestEnemy.getOwner());
+                        if (!toTaunt.equals(borg)) {
+                            //lead to the farthest borg
+                            Entity borgShip = gameMap.getPlayerShipsByDistance(ship, borg).lastEntry().getValue();
+                            newThrustMove = Navigation.taunt(gameMap, ship, borgShip, nearestEnemy);
+                        } else {
+                            //lead to farthest romulan
+                            Entity romulanShip = gameMap.getPlayerShipsByDistance(ship, romulan).lastEntry().getValue();
+                            newThrustMove = Navigation.taunt(gameMap, ship, romulanShip, nearestEnemy);
                         }
-                        newThrustMove = Navigation.navigateShipToDock(gameMap, ship, planet, Constants
-                                .MAX_SPEED);
-
-                    } else if (target != null && target.isDocked()) {
-                        newThrustMove = Navigation.attack(gameMap, ship, target, Constants.MAX_SPEED);
-                    } else if (target != null) {
-                        newThrustMove = Navigation.attack(gameMap, ship, target, 7);
                     }
-
 
                     if (newThrustMove != null) {
                         moveList.add(newThrustMove);
+                        Log.log("New Thrust move was not null");
                     } else {
+                        Log.log("New Thrust move was null");
                         moveList.add(Navigation.emptyThrustMove(ship));
                     }
                 }
